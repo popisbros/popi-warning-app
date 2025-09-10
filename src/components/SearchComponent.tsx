@@ -49,15 +49,15 @@ export default function SearchComponent({ onSearchResults, onResultSelect }: Sea
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // Set new timeout for debounced search
+    // Set new timeout for debounced search (1.5 seconds)
     searchTimeoutRef.current = setTimeout(() => {
       handleSearch(value);
-    }, 300);
+    }, 1500);
   };
 
   const handleResultClick = (result: SearchResult) => {
     setQuery(result.display_name);
-    setShowResults(false);
+    // Don't close dropdown immediately - let user click outside to close
     onResultSelect(result);
   };
 

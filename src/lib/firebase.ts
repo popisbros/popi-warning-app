@@ -27,7 +27,7 @@ export const messaging = typeof window !== 'undefined' ? getMessaging(app) : nul
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
   // Only connect to emulators if not already connected
   if (!auth.emulatorConfig) {
-    connectAuthEmulator(auth, 'http://localhost:9099');
+    // connectAuthEmulator(auth, 'http://localhost:9099');
   }
   // Note: Firestore emulator connection is handled automatically in development
 }

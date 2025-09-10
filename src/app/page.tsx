@@ -57,6 +57,7 @@ function MainApp() {
       lng: parseFloat(result.lon),
     };
     handlePointSelect(coordinates);
+    // The map will center on this point via the MapComponent
   };
 
   const handleAddPOI = () => {
@@ -96,17 +97,10 @@ function MainApp() {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      {/* Map */}
-      <MapComponent
-        onPointSelect={handlePointSelect}
-        searchResults={searchResults}
-        selectedPoint={selectedPoint}
-      />
-
-      {/* Top bar with search and user info */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-        <div className="flex items-center justify-between p-4">
+    <div className="flex flex-col h-screen">
+      {/* Fixed top bar with search and user info */}
+      <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+        <div className="flex items-center justify-between">
           {/* Search */}
           <div className="flex-1 max-w-md">
             <SearchComponent
@@ -146,6 +140,15 @@ function MainApp() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Map - takes remaining space */}
+      <div className="flex-1 relative">
+        <MapComponent
+          onPointSelect={handlePointSelect}
+          searchResults={searchResults}
+          selectedPoint={selectedPoint}
+        />
       </div>
 
       {/* Overlay */}

@@ -29,7 +29,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     map.current = new maplibregl.Map({
       container: mapContainer.current,
       style: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerApiKey}`,
-      center: [2.3522, 48.8566], // Paris coordinates
+      center: [2.3522, 48.8566], // Default to Paris coordinates
       zoom: 13,
       attributionControl: false,
     });
@@ -39,6 +39,8 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
     map.current.on('load', () => {
       setIsMapLoaded(true);
+      // Center on user's GPS location on startup
+      centerOnCurrentLocation();
     });
 
     // Handle map clicks
@@ -47,6 +49,12 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         lat: e.lngLat.lat,
         lng: e.lngLat.lng,
       };
+
+      // Center map on clicked point
+      map.current?.flyTo({
+        center: [coordinates.lng, coordinates.lat],
+        zoom: 16,
+      });
 
       // Search for existing POIs at this location
       const osmPOIs = await searchOSMPOIs(coordinates);
@@ -88,11 +96,16 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     existingMarkers.forEach(marker => marker.remove());
 
     // Add markers for search results
+    const bounds = new maplibregl.LngLatBounds();
+    
     searchResults.forEach((result, index) => {
       const coordinates: Coordinates = {
         lat: parseFloat(result.lat),
         lng: parseFloat(result.lon),
       };
+
+      // Extend bounds to include this point
+      bounds.extend([coordinates.lng, coordinates.lat]);
 
       const marker = new maplibregl.Marker({
         element: createSearchResultMarker(result, index),
@@ -110,6 +123,24 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         });
       });
     });
+
+    // Fit map to show all search results
+    if (searchResults.length > 1) {
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 15
+      });
+    } else if (searchResults.length === 1) {
+      // Center on single result
+      const coordinates: Coordinates = {
+        lat: parseFloat(searchResults[0].lat),
+        lng: parseFloat(searchResults[0].lon),
+      };
+      map.current.flyTo({
+        center: [coordinates.lng, coordinates.lat],
+        zoom: 16,
+      });
+    }
   }, [searchResults, isMapLoaded, onPointSelect]);
 
   // Handle selected point

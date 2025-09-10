@@ -28,7 +28,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       {/* Logo */}
       <div className="mb-8">
         <Image
-          src="/Design/WIKE - Colors (Logo & App).jpg"
+          src="/popi-warning-app/Design/WIKE - Colors (Logo & App).jpg"
           alt="Popi Warning App Logo"
           width={120}
           height={120}
