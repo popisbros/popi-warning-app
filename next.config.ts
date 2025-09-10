@@ -2,10 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: 'standalone',
-  experimental: {
-    serverComponentsExternalPackages: ['firebase']
-  }
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
+  serverExternalPackages: ['firebase']
 };
 
 // PWA configuration
