@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import SplashScreen from '@/components/SplashScreen';
 import MapComponent from '@/components/MapComponent';
