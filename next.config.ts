@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: 'export',
   trailingSlash: true,
+  basePath: '/popi-warning-app',
+  assetPrefix: '/popi-warning-app/',
   images: {
     unoptimized: true
   },
@@ -16,6 +18,8 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  publicExcludes: ['!robots.txt', '!sitemap.xml'],
+  buildExcludes: [/middleware-manifest\.json$/],
 });
 
 export default withPWA(nextConfig);

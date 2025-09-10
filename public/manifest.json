@@ -2,7 +2,7 @@
   "name": "Popi Is Warning The Community (Test)",
   "short_name": "PopiWarning",
   "description": "Community warning and POI management app",
-  "start_url": "/",
+  "start_url": "/popi-warning-app/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

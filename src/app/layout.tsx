@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Popi Is Warning The Community (Test)",
   description: "Community-driven warning and POI management app",
-  manifest: "/manifest.json",
+  manifest: "/popi-warning-app/manifest.json",
   themeColor: "#000000",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   appleWebApp: {
