@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
