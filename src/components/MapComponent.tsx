@@ -145,7 +145,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     }
   }, [isMapLoaded, hasCenteredOnStartup, centerOnCurrentLocation]);
 
-  // Handle search results - NO auto-centering
+  // Handle search results - auto-center to show all results
   useEffect(() => {
     if (!map.current || !isMapLoaded || searchResults.length === 0) return;
 
@@ -153,12 +153,17 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     const existingMarkers = document.querySelectorAll('.search-result-marker');
     existingMarkers.forEach(marker => marker.remove());
 
-    // Add markers for search results
+    // Add markers for search results and collect bounds
+    const bounds = new maplibregl.LngLatBounds();
+    
     searchResults.forEach((result, index) => {
       const coordinates: Coordinates = {
         lat: parseFloat(result.lat),
         lng: parseFloat(result.lon),
       };
+
+      // Extend bounds to include this point
+      bounds.extend([coordinates.lng, coordinates.lat]);
 
       const marker = new maplibregl.Marker({
         element: createSearchResultMarker(result, index),
@@ -167,12 +172,37 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!);
 
-      // Add click handler to marker - NO centering, just open overlay
+      // Add click handler to marker - center on result and open overlay
       marker.getElement().addEventListener('click', () => {
+        // Center map on this search result
+        map.current?.flyTo({
+          center: [coordinates.lng, coordinates.lat],
+          zoom: 16,
+        });
+        
         // Open POI/Warning overlay for this location
         onPointSelect(coordinates);
       });
     });
+
+    // Auto-center to show all search results
+    if (searchResults.length > 1) {
+      // Multiple results: fit bounds to show all
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 15
+      });
+    } else if (searchResults.length === 1) {
+      // Single result: center on it
+      const coordinates: Coordinates = {
+        lat: parseFloat(searchResults[0].lat),
+        lng: parseFloat(searchResults[0].lon),
+      };
+      map.current.flyTo({
+        center: [coordinates.lng, coordinates.lat],
+        zoom: 16,
+      });
+    }
   }, [searchResults, isMapLoaded, onPointSelect]);
 
   // Handle selected point - NO auto-centering
