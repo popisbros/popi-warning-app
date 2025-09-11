@@ -311,17 +311,18 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
   // Handle external centering request
   useEffect(() => {
-    console.log('[MapComponent.centerOnCoordinates.useEffect] Triggered');
-    console.log('[MapComponent.centerOnCoordinates.useEffect] map.current exists:', !!map.current);
-    console.log('[MapComponent.centerOnCoordinates.useEffect] isMapLoaded:', isMapLoaded);
-    console.log('[MapComponent.centerOnCoordinates.useEffect] centerOnCoordinates:', centerOnCoordinates);
+    console.log('MapComponent: centerOnCoordinates useEffect triggered');
+    console.log('MapComponent: map.current exists:', !!map.current);
+    console.log('MapComponent: isMapLoaded:', isMapLoaded);
+    console.log('MapComponent: centerOnCoordinates:', centerOnCoordinates);
     
     if (!map.current || !isMapLoaded || !centerOnCoordinates) {
-      console.log('[MapComponent.centerOnCoordinates.useEffect] Early return - missing requirements');
+      console.log('MapComponent: Early return - missing requirements');
       return;
     }
 
-    console.log('[MapComponent.centerOnCoordinates.useEffect] Calling flyTo with center:', [centerOnCoordinates.lng, centerOnCoordinates.lat]);
+    console.log('MapComponent: centerOnCoordinates changed to:', centerOnCoordinates);
+    console.log('MapComponent: Calling flyTo with center:', [centerOnCoordinates.lng, centerOnCoordinates.lat]);
 
     // Center map on the requested coordinates
     map.current.flyTo({
@@ -331,7 +332,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
     // Listen for moveend event to know when centering is complete
     const handleMoveEnd = () => {
-      console.log('[MapComponent.centerOnCoordinates.handleMoveEnd] moveend event fired, calling onCenterComplete');
+      console.log('MapComponent: moveend event fired, calling onCenterComplete');
       if (onCenterComplete) {
         onCenterComplete();
       }

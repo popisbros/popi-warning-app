@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import { OverlayData, POIType } from '@/types';
 import { getPOIIcon, getPOITypeLabel } from '@/lib/utils';
 
@@ -23,14 +22,6 @@ export default function OverlayComponent({
   onCorrectWarning,
 }: OverlayComponentProps) {
   const [isClosing, setIsClosing] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  
-  console.log('[OverlayComponent] Rendering with data:', data);
-  
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -83,9 +74,7 @@ export default function OverlayComponent({
 
   const displayData = getDisplayData();
 
-  if (!mounted) return null;
-
-  const overlayContent = (
+  return (
     <div
       className={`fixed inset-0 z-30 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 ${
         isClosing ? 'opacity-0' : 'opacity-100'
@@ -244,6 +233,4 @@ export default function OverlayComponent({
       </div>
     </div>
   );
-
-  return createPortal(overlayContent, document.body);
 }
