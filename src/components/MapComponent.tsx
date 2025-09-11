@@ -112,13 +112,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         lng: e.lngLat.lng,
       };
 
-      // Center map on clicked point
-      isProgrammaticMove.current = true;
-      map.current?.flyTo({
-        center: [coordinates.lng, coordinates.lat],
-        zoom: 16,
-      });
-
+      // Don't center map on clicked point - just select it
       // Search for existing POIs at this location
       const osmPOIs = await searchOSMPOIs(coordinates);
       const poi = osmPOIs.length > 0 ? osmNodeToPOI(osmPOIs[0]) : undefined;
@@ -150,12 +144,12 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     };
   }, [onPointSelect, onMapCenterChange]);
 
-  // Center on GPS location on startup (only if no search results)
+  // Center on GPS location on startup
   useEffect(() => {
-    if (isMapLoaded && searchResults.length === 0) {
+    if (isMapLoaded) {
       centerOnCurrentLocation();
     }
-  }, [isMapLoaded, searchResults.length, centerOnCurrentLocation]);
+  }, [isMapLoaded, centerOnCurrentLocation]);
 
   // Handle search results
   useEffect(() => {
@@ -234,12 +228,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       .setLngLat([selectedPoint.lng, selectedPoint.lat])
       .addTo(map.current);
 
-    // Center map on selected point
-    isProgrammaticMove.current = true;
-    map.current.flyTo({
-      center: [selectedPoint.lng, selectedPoint.lat],
-      zoom: 16,
-    });
+    // Don't auto-center on selected point - let user control the map
   }, [selectedPoint, isMapLoaded]);
 
   const createSearchResultMarker = (result: SearchResult, index: number) => {
@@ -267,6 +256,18 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
+      
+      {/* GPS Center Button */}
+      <button
+        onClick={centerOnCurrentLocation}
+        className="absolute top-4 right-4 bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-lg border border-gray-200 z-10"
+        title="Center on my location"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      </button>
       
       {/* Map attribution */}
       <div className="absolute bottom-0 right-0 bg-white/80 px-2 py-1 text-xs text-gray-600">
