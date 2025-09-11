@@ -19,7 +19,6 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isProgrammaticMove = useRef(false);
   const [hasCenteredOnStartup, setHasCenteredOnStartup] = useState(false);
-  const [hasUserMovedMap, setHasUserMovedMap] = useState(false);
 
   const centerOnCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -102,8 +101,6 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
           lat: center.lat,
           lng: center.lng
         });
-        // Mark that user has manually moved the map
-        setHasUserMovedMap(true);
       }
       // Reset the flag
       isProgrammaticMove.current = false;
@@ -155,7 +152,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     }
   }, [isMapLoaded, hasCenteredOnStartup, centerOnCurrentLocation]);
 
-  // Handle search results - only auto-center if user hasn't moved the map manually
+  // Handle search results - always auto-center to show all results
   useEffect(() => {
     if (!map.current || !isMapLoaded || searchResults.length === 0) return;
 
@@ -196,29 +193,26 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       });
     });
 
-    // Only auto-center if user hasn't manually moved the map
-    if (!hasUserMovedMap) {
-      // Fit map to show all search results
-      if (searchResults.length > 1) {
-        isProgrammaticMove.current = true;
-        map.current.fitBounds(bounds, {
-          padding: 50,
-          maxZoom: 15
-        });
-      } else if (searchResults.length === 1) {
-        // Center on single result
-        const coordinates: Coordinates = {
-          lat: parseFloat(searchResults[0].lat),
-          lng: parseFloat(searchResults[0].lon),
-        };
-        isProgrammaticMove.current = true;
-        map.current.flyTo({
-          center: [coordinates.lng, coordinates.lat],
-          zoom: 16,
-        });
-      }
+    // Always auto-center to show all search results
+    if (searchResults.length > 1) {
+      isProgrammaticMove.current = true;
+      map.current.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 15
+      });
+    } else if (searchResults.length === 1) {
+      // Center on single result
+      const coordinates: Coordinates = {
+        lat: parseFloat(searchResults[0].lat),
+        lng: parseFloat(searchResults[0].lon),
+      };
+      isProgrammaticMove.current = true;
+      map.current.flyTo({
+        center: [coordinates.lng, coordinates.lat],
+        zoom: 16,
+      });
     }
-  }, [searchResults, isMapLoaded, onPointSelect, hasUserMovedMap]);
+  }, [searchResults, isMapLoaded, onPointSelect]);
 
   // Handle selected point
   useEffect(() => {
