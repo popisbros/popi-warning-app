@@ -14,7 +14,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+let app;
+try {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+  // Fallback initialization
+  app = initializeApp(firebaseConfig);
+}
 
 // Initialize Firebase services
 export const auth = getAuth(app);
@@ -38,20 +45,26 @@ export const getFCMToken = async (): Promise<string | null> => {
   
   try {
     const token = await getToken(messaging, {
-      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+      vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || 'your-vapid-key'
     });
-    return token;
+    
+    if (token) {
+      console.log('FCM token:', token);
+      return token;
+    } else {
+      console.log('No registration token available.');
+      return null;
+    }
   } catch (error) {
-    console.error('Error getting FCM token:', error);
+    console.error('An error occurred while retrieving token:', error);
     return null;
   }
 };
 
-// Listen for foreground messages
-export const onForegroundMessage = (callback: (payload: unknown) => void) => {
-  if (!messaging) return () => {};
-  
-  return onMessage(messaging, callback);
+export const onForegroundMessage = (callback: (payload: any) => void) => {
+  if (!messaging) return;
+  return onMessage(messaging, (payload) => {
+    console.log('Foreground message received:', payload);
+    callback(payload);
+  });
 };
-
-export default app;

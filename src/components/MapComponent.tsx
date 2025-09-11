@@ -30,7 +30,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/osm-cycling/style.json?key=${mapTilerApiKey}`,
+      style: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerApiKey}`,
       center: [0, 0], // Default to world center, will be overridden by GPS
       zoom: 2,
       attributionControl: false,
