@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Coordinates, SearchResult, POI } from '@/types';
@@ -29,7 +29,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
     map.current = new maplibregl.Map({
       container: mapContainer.current,
-      style: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerApiKey}`,
+      style: `https://api.maptiler.com/maps/osm-cycling/style.json?key=${mapTilerApiKey}`,
       center: [0, 0], // Default to world center, will be overridden by GPS
       zoom: 2,
       attributionControl: false,
@@ -77,7 +77,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     let pressTimer: NodeJS.Timeout;
     map.current.on('mousedown', () => {
       pressTimer = setTimeout(() => {
-        // Long press detected - handled by click event
+        // Long press detected - could add custom behavior here
       }, 500);
     });
 
@@ -164,14 +164,14 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   useEffect(() => {
     if (!map.current || !isMapLoaded || !selectedPoint) return;
 
-    // Clear existing selected marker
+    // Clear existing selected point marker
     const existingSelectedMarker = document.querySelector('.selected-point-marker');
     if (existingSelectedMarker) {
       existingSelectedMarker.remove();
     }
 
-    // Add selected point marker
-    new maplibregl.Marker({
+    // Add marker for selected point
+    const marker = new maplibregl.Marker({
       element: createSelectedPointMarker(),
       anchor: 'center',
     })
@@ -185,18 +185,18 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     });
   }, [selectedPoint, isMapLoaded]);
 
-  const createSearchResultMarker = (result: SearchResult, index: number): HTMLElement => {
+  const createSearchResultMarker = (result: SearchResult, index: number) => {
     const marker = document.createElement('div');
     marker.className = 'search-result-marker';
     marker.innerHTML = `
-      <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
-        ${index + 1}
+      <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
+        <span class="text-sm font-bold">${index + 1}</span>
       </div>
     `;
     return marker;
   };
 
-  const createSelectedPointMarker = (): HTMLElement => {
+  const createSelectedPointMarker = () => {
     const marker = document.createElement('div');
     marker.className = 'selected-point-marker';
     marker.innerHTML = `
@@ -256,17 +256,10 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
       
-      {/* Current location button */}
-      <button
-        onClick={centerOnCurrentLocation}
-        className="absolute top-4 left-4 bg-white rounded-full p-3 shadow-lg hover:bg-gray-50 transition-colors z-10"
-        title="Center on current location"
-      >
-        <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </button>
+      {/* Map attribution */}
+      <div className="absolute bottom-0 right-0 bg-white/80 px-2 py-1 text-xs text-gray-600">
+        © MapTiler © OpenStreetMap contributors
+      </div>
     </div>
   );
 }
