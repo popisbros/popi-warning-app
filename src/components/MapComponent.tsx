@@ -135,7 +135,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         map.current = null;
       }
     };
-  }, [onPointSelect, onMapCenterChange]);
+  }, []); // Remove dependencies to prevent reinitialization
 
   // Center on GPS location on startup (only once)
   useEffect(() => {

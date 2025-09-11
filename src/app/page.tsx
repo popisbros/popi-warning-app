@@ -61,9 +61,9 @@ function MainApp() {
     // The map will center on this point via the MapComponent
   };
 
-  const handleMapCenterChange = (center: { lat: number; lng: number }) => {
+  const handleMapCenterChange = useCallback((center: { lat: number; lng: number }) => {
     setMapCenter(center);
-  };
+  }, []);
 
   const handleAddPOI = () => {
     // TODO: Implement POI addition
