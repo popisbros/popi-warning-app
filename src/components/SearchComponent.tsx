@@ -57,6 +57,7 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
   };
 
   const handleResultClick = (result: SearchResult) => {
+    console.log('SearchComponent: handleResultClick called with:', result);
     setQuery(result.display_name);
     // Don't close dropdown immediately - let user click outside to close
     onResultSelect(result);

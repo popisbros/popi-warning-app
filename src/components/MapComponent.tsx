@@ -230,16 +230,25 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   useEffect(() => {
     if (!map.current || !isMapLoaded || !centerOnCoordinates) return;
 
+    console.log('MapComponent: centerOnCoordinates changed to:', centerOnCoordinates);
+    console.log('MapComponent: Calling flyTo with center:', [centerOnCoordinates.lng, centerOnCoordinates.lat]);
+
     // Center map on the requested coordinates
     map.current.flyTo({
       center: [centerOnCoordinates.lng, centerOnCoordinates.lat],
       zoom: 16,
     });
 
-    // Call completion callback after centering
-    if (onCenterComplete) {
-      onCenterComplete();
-    }
+    // Listen for moveend event to know when centering is complete
+    const handleMoveEnd = () => {
+      console.log('MapComponent: moveend event fired, calling onCenterComplete');
+      if (onCenterComplete) {
+        onCenterComplete();
+      }
+      map.current?.off('moveend', handleMoveEnd);
+    };
+
+    map.current.on('moveend', handleMoveEnd);
   }, [centerOnCoordinates, isMapLoaded, onCenterComplete]);
 
   const createSearchResultMarker = (result: SearchResult, index: number) => {

@@ -10,6 +10,7 @@ import MapComponent from '@/components/MapComponent';
 import SearchComponent from '@/components/SearchComponent';
 import OverlayComponent from '@/components/OverlayComponent';
 import AuthComponent from '@/components/AuthComponent';
+import DebugPanel from '@/components/DebugPanel';
 import { Coordinates, SearchResult, OverlayData, POI } from '@/types';
 import { searchOSMPOIs, osmNodeToPOI } from '@/lib/api';
 
@@ -23,6 +24,7 @@ function MainApp() {
   const [, setSelectedPOI] = useState<POI | undefined>();
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | undefined>();
   const [centerOnCoordinates, setCenterOnCoordinates] = useState<Coordinates | null>(null);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
 
   const { user, loading } = useAuth();
 
@@ -54,14 +56,17 @@ function MainApp() {
   };
 
   const handleResultSelect = (result: SearchResult) => {
+    console.log('Page: handleResultSelect called with:', result);
     const coordinates: Coordinates = {
       lat: parseFloat(result.lat),
       lng: parseFloat(result.lon),
     };
     
+    console.log('Page: Setting centerOnCoordinates to:', coordinates);
     // Center map on this result
     setCenterOnCoordinates(coordinates);
     
+    console.log('Page: Calling handlePointSelect with:', coordinates);
     // Open POI/Warning overlay
     handlePointSelect(coordinates);
   };
@@ -71,6 +76,7 @@ function MainApp() {
   }, []);
 
   const handleCenterComplete = useCallback(() => {
+    console.log('Page: handleCenterComplete called, resetting centerOnCoordinates to null');
     setCenterOnCoordinates(null);
   }, []);
 
@@ -124,36 +130,49 @@ function MainApp() {
             />
           </div>
 
-          {/* User section */}
-          <div className="flex items-center space-x-4 ml-4">
-            {user ? (
-              <div className="flex items-center space-x-2">
-                {user.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt={user.displayName || 'User'}
-                    className="w-8 h-8 rounded-full"
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                  {/* User section */}
+                  <div className="flex items-center space-x-4 ml-4">
+                    {/* Debug Toggle Button */}
+                    <button
+                      onClick={() => setShowDebugPanel(!showDebugPanel)}
+                      className={`p-2 rounded-lg text-sm font-medium transition-colors ${
+                        showDebugPanel 
+                          ? 'bg-green-600 text-white hover:bg-green-700' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                      title={showDebugPanel ? 'Hide Debug Panel' : 'Show Debug Panel'}
+                    >
+                      🐛
+                    </button>
+
+                    {user ? (
+                      <div className="flex items-center space-x-2">
+                        {user.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt={user.displayName || 'User'}
+                            className="w-8 h-8 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                          </div>
+                        )}
+                        <span className="text-sm font-medium text-gray-700">
+                          {user.displayName || user.email || 'User'}
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowAuth(true)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Sign In
+                      </button>
+                    )}
                   </div>
-                )}
-                <span className="text-sm font-medium text-gray-700">
-                  {user.displayName || user.email || 'User'}
-                </span>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuth(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Sign In
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -185,6 +204,12 @@ function MainApp() {
       {showAuth && (
         <AuthComponent onClose={() => setShowAuth(false)} />
       )}
+
+      {/* Debug Panel */}
+      <DebugPanel 
+        isVisible={showDebugPanel} 
+        onToggle={() => setShowDebugPanel(false)} 
+      />
     </div>
   );
 }
