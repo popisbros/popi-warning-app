@@ -1,9 +1,14 @@
 import { Coordinates, SearchResult, OSMNode, POI, POIType } from '@/types';
 
 // LocationIQ API functions
-export const searchLocation = async (query: string): Promise<SearchResult[]> => {
+export const searchLocation = async (query: string, mapCenter?: { lat: number; lng: number }): Promise<SearchResult[]> => {
   const apiKey = process.env.NEXT_PUBLIC_LOCATIONIQ_API_KEY;
-  const url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${encodeURIComponent(query)}&format=json&limit=10`;
+  let url = `https://us1.locationiq.com/v1/search.php?key=${apiKey}&q=${encodeURIComponent(query)}&format=json&limit=10`;
+  
+  // Add proximity bias if map center is provided
+  if (mapCenter) {
+    url += `&bounded=1&viewbox=${mapCenter.lng - 0.1},${mapCenter.lat - 0.1},${mapCenter.lng + 0.1},${mapCenter.lat + 0.1}`;
+  }
   
   try {
     const response = await fetch(url);

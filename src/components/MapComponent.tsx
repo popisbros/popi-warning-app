@@ -10,9 +10,10 @@ interface MapComponentProps {
   onPointSelect: (coordinates: Coordinates, poi?: POI) => void;
   searchResults: SearchResult[];
   selectedPoint?: Coordinates;
+  onMapCenterChange?: (center: { lat: number; lng: number }) => void;
 }
 
-export default function MapComponent({ onPointSelect, searchResults, selectedPoint }: MapComponentProps) {
+export default function MapComponent({ onPointSelect, searchResults, selectedPoint, onMapCenterChange }: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -39,8 +40,17 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
     map.current.on('load', () => {
       setIsMapLoaded(true);
-      // Center on user's GPS location on startup
-      centerOnCurrentLocation();
+    });
+
+    // Track map center changes
+    map.current.on('moveend', () => {
+      if (onMapCenterChange && map.current) {
+        const center = map.current.getCenter();
+        onMapCenterChange({
+          lat: center.lat,
+          lng: center.lng
+        });
+      }
     });
 
     // Handle map clicks
@@ -86,6 +96,13 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       }
     };
   }, [onPointSelect]);
+
+  // Center on GPS location on startup (only if no search results)
+  useEffect(() => {
+    if (isMapLoaded && searchResults.length === 0) {
+      centerOnCurrentLocation();
+    }
+  }, [isMapLoaded, searchResults.length]);
 
   // Handle search results
   useEffect(() => {

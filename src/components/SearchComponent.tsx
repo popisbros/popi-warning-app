@@ -7,9 +7,10 @@ import { searchLocation } from '@/lib/api';
 interface SearchComponentProps {
   onSearchResults: (results: SearchResult[]) => void;
   onResultSelect: (result: SearchResult) => void;
+  mapCenter?: { lat: number; lng: number };
 }
 
-export default function SearchComponent({ onSearchResults, onResultSelect }: SearchComponentProps) {
+export default function SearchComponent({ onSearchResults, onResultSelect, mapCenter }: SearchComponentProps) {
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -27,7 +28,7 @@ export default function SearchComponent({ onSearchResults, onResultSelect }: Sea
 
     setIsSearching(true);
     try {
-      const searchResults = await searchLocation(searchQuery);
+      const searchResults = await searchLocation(searchQuery, mapCenter);
       setResults(searchResults);
       onSearchResults(searchResults);
       setShowResults(true);
@@ -101,7 +102,7 @@ export default function SearchComponent({ onSearchResults, onResultSelect }: Sea
           value={query}
           onChange={handleInputChange}
           placeholder="Search for addresses, places..."
-          className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-black"
         />
         
         {isSearching && (

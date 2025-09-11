@@ -21,6 +21,7 @@ function MainApp() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<Coordinates | undefined>();
   const [, setSelectedPOI] = useState<POI | undefined>();
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | undefined>();
 
   const { user, loading } = useAuth();
 
@@ -58,6 +59,10 @@ function MainApp() {
     };
     handlePointSelect(coordinates);
     // The map will center on this point via the MapComponent
+  };
+
+  const handleMapCenterChange = (center: { lat: number; lng: number }) => {
+    setMapCenter(center);
   };
 
   const handleAddPOI = () => {
@@ -106,6 +111,7 @@ function MainApp() {
             <SearchComponent
               onSearchResults={handleSearchResults}
               onResultSelect={handleResultSelect}
+              mapCenter={mapCenter}
             />
           </div>
 
@@ -148,6 +154,7 @@ function MainApp() {
           onPointSelect={handlePointSelect}
           searchResults={searchResults}
           selectedPoint={selectedPoint}
+          onMapCenterChange={handleMapCenterChange}
         />
       </div>
 
