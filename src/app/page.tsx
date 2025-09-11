@@ -56,17 +56,17 @@ function MainApp() {
   };
 
   const handleResultSelect = (result: SearchResult) => {
-    console.log('Page: handleResultSelect called with:', result);
+    console.log('🔍 SEARCH_RESULT_SELECTED:', result.display_name, result.lat, result.lon);
     const coordinates: Coordinates = {
       lat: parseFloat(result.lat),
       lng: parseFloat(result.lon),
     };
     
-    console.log('Page: Setting centerOnCoordinates to:', coordinates);
+    console.log('📍 SETTING_CENTER_COORDINATES:', coordinates);
     // Center map on this result
     setCenterOnCoordinates(coordinates);
     
-    console.log('Page: Calling handlePointSelect with:', coordinates);
+    console.log('🎯 CALLING_POINT_SELECT:', coordinates);
     // Open POI/Warning overlay
     handlePointSelect(coordinates);
   };
@@ -76,7 +76,7 @@ function MainApp() {
   }, []);
 
   const handleCenterComplete = useCallback(() => {
-    console.log('Page: handleCenterComplete called, resetting centerOnCoordinates to null');
+    console.log('✅ CENTER_COMPLETE: Resetting centerOnCoordinates to null');
     setCenterOnCoordinates(null);
   }, []);
 
