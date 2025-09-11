@@ -17,18 +17,16 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const isProgrammaticMove = useRef(false);
   const [hasCenteredOnStartup, setHasCenteredOnStartup] = useState(false);
 
   const centerOnCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
       console.log('Geolocation is not supported by this browser.');
-      // Fallback to a reasonable default location (London)
+      // Fallback to world view
       if (map.current) {
-        isProgrammaticMove.current = true;
         map.current.flyTo({
-          center: [-0.1276, 51.5074], // London coordinates
-          zoom: 10,
+          center: [0, 0],
+          zoom: 2,
         });
       }
       return;
@@ -42,7 +40,6 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         };
 
         if (map.current) {
-          isProgrammaticMove.current = true;
           map.current.flyTo({
             center: [coordinates.lng, coordinates.lat],
             zoom: 16,
@@ -51,12 +48,11 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       },
       (error) => {
         console.error('Error getting location:', error);
-        // Fallback to a reasonable default location (London) instead of alert
+        // Fallback to world view
         if (map.current) {
-          isProgrammaticMove.current = true;
           map.current.flyTo({
-            center: [-0.1276, 51.5074], // London coordinates
-            zoom: 10,
+            center: [0, 0],
+            zoom: 2,
           });
         }
       },
@@ -80,7 +76,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     map.current = new maplibregl.Map({
       container: mapContainer.current,
       style: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerApiKey}`,
-      center: [0, 0], // Default to world center, will be overridden by GPS
+      center: [0, 0], // Default to world center
       zoom: 2,
       attributionControl: false,
     });
@@ -92,18 +88,15 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       setIsMapLoaded(true);
     });
 
-    // Track map center changes (only for user-initiated moves)
+    // Track map center changes
     map.current.on('moveend', () => {
-      // Only trigger center change if it's not a programmatic move
-      if (!isProgrammaticMove.current && onMapCenterChange && map.current) {
+      if (onMapCenterChange && map.current) {
         const center = map.current.getCenter();
         onMapCenterChange({
           lat: center.lat,
           lng: center.lng
         });
       }
-      // Reset the flag
-      isProgrammaticMove.current = false;
     });
 
     // Handle map clicks
@@ -152,7 +145,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     }
   }, [isMapLoaded, hasCenteredOnStartup, centerOnCurrentLocation]);
 
-  // Handle search results - always auto-center to show all results
+  // Handle search results - NO auto-centering
   useEffect(() => {
     if (!map.current || !isMapLoaded || searchResults.length === 0) return;
 
@@ -161,16 +154,11 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     existingMarkers.forEach(marker => marker.remove());
 
     // Add markers for search results
-    const bounds = new maplibregl.LngLatBounds();
-    
     searchResults.forEach((result, index) => {
       const coordinates: Coordinates = {
         lat: parseFloat(result.lat),
         lng: parseFloat(result.lon),
       };
-
-      // Extend bounds to include this point
-      bounds.extend([coordinates.lng, coordinates.lat]);
 
       const marker = new maplibregl.Marker({
         element: createSearchResultMarker(result, index),
@@ -179,42 +167,15 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!);
 
-      // Add click handler to marker
+      // Add click handler to marker - NO centering, just open overlay
       marker.getElement().addEventListener('click', () => {
-        // Center map on search result
-        isProgrammaticMove.current = true;
-        map.current?.flyTo({
-          center: [coordinates.lng, coordinates.lat],
-          zoom: 16,
-        });
-        
         // Open POI/Warning overlay for this location
         onPointSelect(coordinates);
       });
     });
-
-    // Always auto-center to show all search results
-    if (searchResults.length > 1) {
-      isProgrammaticMove.current = true;
-      map.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 15
-      });
-    } else if (searchResults.length === 1) {
-      // Center on single result
-      const coordinates: Coordinates = {
-        lat: parseFloat(searchResults[0].lat),
-        lng: parseFloat(searchResults[0].lon),
-      };
-      isProgrammaticMove.current = true;
-      map.current.flyTo({
-        center: [coordinates.lng, coordinates.lat],
-        zoom: 16,
-      });
-    }
   }, [searchResults, isMapLoaded, onPointSelect]);
 
-  // Handle selected point
+  // Handle selected point - NO auto-centering
   useEffect(() => {
     if (!map.current || !isMapLoaded || !selectedPoint) return;
 
@@ -259,7 +220,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
       
-      {/* GPS Center Button - moved to top left */}
+      {/* GPS Center Button */}
       <button
         onClick={centerOnCurrentLocation}
         className="absolute top-4 left-4 bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-lg border border-gray-200 z-10"
