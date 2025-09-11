@@ -29,12 +29,15 @@ function MainApp() {
   const { user, loading } = useAuth();
 
   const handlePointSelect = async (coordinates: Coordinates, poi?: POI) => {
+    console.log('[Page.handlePointSelect] Called with coordinates:', coordinates, 'poi:', poi);
     setSelectedPoint(coordinates);
     setSelectedPOI(poi);
 
     // Search for both OSM and Firestore data
+    console.log('[Page.handlePointSelect] Searching for OSM POIs...');
     const osmPOIs = await searchOSMPOIs(coordinates);
     const osmPOI = osmPOIs.length > 0 ? osmNodeToPOI(osmPOIs[0]) : undefined;
+    console.log('[Page.handlePointSelect] Found OSM POI:', osmPOI);
 
     // TODO: Search Firestore for warnings
     const firestoreWarning = undefined; // Will implement later
@@ -47,8 +50,10 @@ function MainApp() {
       hasFirestoreData: !!firestoreWarning,
     };
 
+    console.log('[Page.handlePointSelect] Setting overlay data:', overlay);
     setOverlayData(overlay);
     setShowOverlay(true);
+    console.log('[Page.handlePointSelect] Overlay should now be visible');
   };
 
   const handleSearchResults = (results: SearchResult[]) => {
@@ -56,17 +61,17 @@ function MainApp() {
   };
 
   const handleResultSelect = (result: SearchResult) => {
-    console.log('Page: handleResultSelect called with:', result);
+    console.log('[Page.handleResultSelect] Called with result:', result);
     const coordinates: Coordinates = {
       lat: parseFloat(result.lat),
       lng: parseFloat(result.lon),
     };
     
-    console.log('Page: Setting centerOnCoordinates to:', coordinates);
+    console.log('[Page.handleResultSelect] Setting centerOnCoordinates to:', coordinates);
     // Center map on this result
     setCenterOnCoordinates(coordinates);
     
-    console.log('Page: Calling handlePointSelect with:', coordinates);
+    console.log('[Page.handleResultSelect] Calling handlePointSelect with:', coordinates);
     // Open POI/Warning overlay
     handlePointSelect(coordinates);
   };
@@ -76,7 +81,7 @@ function MainApp() {
   }, []);
 
   const handleCenterComplete = useCallback(() => {
-    console.log('Page: handleCenterComplete called, resetting centerOnCoordinates to null');
+    console.log('[Page.handleCenterComplete] Called, resetting centerOnCoordinates to null');
     setCenterOnCoordinates(null);
   }, []);
 

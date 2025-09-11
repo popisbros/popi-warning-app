@@ -57,12 +57,8 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
   };
 
   const handleResultClick = (result: SearchResult, event: React.MouseEvent | React.TouchEvent) => {
-    console.log('SearchComponent: handleResultClick called with:', result);
-    console.log('SearchComponent: result.place_id:', result.place_id);
-    console.log('SearchComponent: result.lat:', result.lat);
-    console.log('SearchComponent: result.lon:', result.lon);
-    console.log('SearchComponent: result.display_name:', result.display_name);
-    console.log('SearchComponent: Event type:', event.type);
+    console.log('[SearchComponent.handleResultClick] Called with result:', result);
+    console.log('[SearchComponent.handleResultClick] Event type:', event.type);
     
     // Prevent event bubbling
     event.preventDefault();
@@ -70,9 +66,9 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
     
     setQuery(result.display_name);
     // Don't close dropdown immediately - let user click outside to close
-    console.log('SearchComponent: About to call onResultSelect');
+    console.log('[SearchComponent.handleResultClick] About to call onResultSelect');
     onResultSelect(result);
-    console.log('SearchComponent: onResultSelect called');
+    console.log('[SearchComponent.handleResultClick] onResultSelect called');
   };
 
   const clearSearch = () => {
