@@ -56,12 +56,13 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
     }, 1500);
   };
 
-  const handleResultClick = (result: SearchResult, event: React.MouseEvent) => {
+  const handleResultClick = (result: SearchResult, event: React.MouseEvent | React.TouchEvent) => {
     console.log('SearchComponent: handleResultClick called with:', result);
     console.log('SearchComponent: result.place_id:', result.place_id);
     console.log('SearchComponent: result.lat:', result.lat);
     console.log('SearchComponent: result.lon:', result.lon);
     console.log('SearchComponent: result.display_name:', result.display_name);
+    console.log('SearchComponent: Event type:', event.type);
     
     // Prevent event bubbling
     event.preventDefault();
@@ -155,6 +156,7 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
               key={result.place_id}
               data-search-result
               onClick={(event) => handleResultClick(result, event)}
+              onTouchEnd={(event) => handleResultClick(result, event)}
               className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
             >
               <div className="flex items-start">

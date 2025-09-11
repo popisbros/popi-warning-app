@@ -76,7 +76,7 @@ export default function OverlayComponent({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 ${
+      className={`fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 ${
         isClosing ? 'opacity-0' : 'opacity-100'
       }`}
       onClick={handleBackdropClick}
@@ -85,6 +85,7 @@ export default function OverlayComponent({
         className={`bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-transform duration-200 ${
           isClosing ? 'scale-95' : 'scale-100'
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">

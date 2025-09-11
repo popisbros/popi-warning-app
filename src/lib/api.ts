@@ -93,17 +93,27 @@ export const searchOSMPOIs = async (coordinates: Coordinates): Promise<OSMNode[]
   
   const url = `${baseURL}api/0.6/map?bbox=${bbox}`;
   
+  console.log('OSM API: Searching POIs for coordinates:', coordinates);
+  console.log('OSM API: URL:', url);
+  
   try {
     const response = await fetch(url);
+    console.log('OSM API: Response status:', response.status);
+    console.log('OSM API: Response headers:', Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
       throw new Error(`OSM API error: ${response.status}`);
     }
     
     const xmlText = await response.text();
+    console.log('OSM API: XML response length:', xmlText.length);
+    console.log('OSM API: XML response preview:', xmlText.substring(0, 200));
+    
     // Parse XML and extract nodes with POI tags
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
     const nodes = xmlDoc.getElementsByTagName('node');
+    console.log('OSM API: Found nodes:', nodes.length);
     
     const pois: OSMNode[] = [];
     for (let i = 0; i < nodes.length; i++) {
@@ -137,6 +147,7 @@ export const searchOSMPOIs = async (coordinates: Coordinates): Promise<OSMNode[]
       }
     }
     
+    console.log('OSM API: Returning POIs:', pois.length);
     return pois;
   } catch (error) {
     console.error('Error searching OSM POIs:', error);

@@ -13,9 +13,10 @@ interface MapComponentProps {
   onMapCenterChange?: (center: { lat: number; lng: number }) => void;
   centerOnCoordinates?: Coordinates | null;
   onCenterComplete?: () => void;
+  debugPanelOpen?: boolean;
 }
 
-export default function MapComponent({ onPointSelect, searchResults, selectedPoint, onMapCenterChange, centerOnCoordinates, onCenterComplete }: MapComponentProps) {
+export default function MapComponent({ onPointSelect, searchResults, selectedPoint, onMapCenterChange, centerOnCoordinates, onCenterComplete, debugPanelOpen }: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -101,18 +102,100 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       }
     });
 
-    // Handle map clicks
-    map.current.on('click', async (e) => {
-      const coordinates: Coordinates = {
+    // Handle map interactions - both mouse clicks and touch events
+    let touchStartTime = 0;
+    let touchStartPos: { lat: number; lng: number } | null = null;
+    let isDragging = false;
+
+    // Handle touch start
+    map.current.on('touchstart', (e) => {
+      touchStartTime = Date.now();
+      touchStartPos = {
         lat: e.lngLat.lat,
         lng: e.lngLat.lng,
       };
+      isDragging = false;
+      console.log('MapComponent: Touch start at:', touchStartPos);
+    });
 
-      // Search for existing POIs at this location
-      const osmPOIs = await searchOSMPOIs(coordinates);
-      const poi = osmPOIs.length > 0 ? osmNodeToPOI(osmPOIs[0]) : undefined;
+    // Handle touch move (indicates dragging)
+    map.current.on('touchmove', () => {
+      isDragging = true;
+      console.log('MapComponent: Touch move detected - dragging');
+    });
 
-      onPointSelect(coordinates, poi);
+    // Handle touch end
+    map.current.on('touchend', async (e) => {
+      const touchDuration = Date.now() - touchStartTime;
+      console.log('MapComponent: Touch end, duration:', touchDuration, 'isDragging:', isDragging);
+
+      // Only handle as intentional tap if:
+      // 1. Touch duration is short (< 500ms)
+      // 2. Not dragging
+      // 3. Touch position hasn't moved much
+      if (touchDuration < 500 && !isDragging && touchStartPos) {
+        const distance = Math.sqrt(
+          Math.pow(e.lngLat.lng - touchStartPos.lng, 2) + 
+          Math.pow(e.lngLat.lat - touchStartPos.lat, 2)
+        );
+
+        if (distance < 0.001) {
+          console.log('MapComponent: Intentional touch detected, searching for POIs');
+          const coordinates: Coordinates = {
+            lat: e.lngLat.lat,
+            lng: e.lngLat.lng,
+          };
+
+          // Search for existing POIs at this location
+          const osmPOIs = await searchOSMPOIs(coordinates);
+          const poi = osmPOIs.length > 0 ? osmNodeToPOI(osmPOIs[0]) : undefined;
+
+          onPointSelect(coordinates, poi);
+        } else {
+          console.log('MapComponent: Touch moved too much, ignoring');
+        }
+      } else {
+        console.log('MapComponent: Touch was part of navigation, ignoring');
+      }
+
+      // Reset state
+      touchStartPos = null;
+      isDragging = false;
+    });
+
+    // Handle mouse clicks (for desktop)
+    map.current.on('click', async (e) => {
+      // Only handle mouse clicks if no touch events are being used
+      if (touchStartTime === 0) {
+        const coordinates: Coordinates = {
+          lat: e.lngLat.lat,
+          lng: e.lngLat.lng,
+        };
+
+        // Add a small delay to distinguish between navigation and intentional clicks
+        setTimeout(async () => {
+          // Check if map is still at the same position (not being dragged)
+          if (map.current) {
+            const currentCenter = map.current.getCenter();
+            const distance = Math.sqrt(
+              Math.pow(currentCenter.lng - e.lngLat.lng, 2) + 
+              Math.pow(currentCenter.lat - e.lngLat.lat, 2)
+            );
+            
+            // Only open overlay if map hasn't moved much (indicating intentional click)
+            if (distance < 0.001) {
+              console.log('MapComponent: Intentional mouse click detected, searching for POIs');
+              // Search for existing POIs at this location
+              const osmPOIs = await searchOSMPOIs(coordinates);
+              const poi = osmPOIs.length > 0 ? osmNodeToPOI(osmPOIs[0]) : undefined;
+
+              onPointSelect(coordinates, poi);
+            } else {
+              console.log('MapComponent: Mouse click was part of navigation, ignoring');
+            }
+          }
+        }, 100);
+      }
     });
 
     // Handle long press on mobile
@@ -250,6 +333,17 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
     map.current.on('moveend', handleMoveEnd);
   }, [centerOnCoordinates, isMapLoaded, onCenterComplete]);
+
+  // Handle debug panel state changes - trigger map resize
+  useEffect(() => {
+    if (map.current && isMapLoaded) {
+      // Small delay to allow CSS transition to complete
+      setTimeout(() => {
+        map.current?.resize();
+        console.log('MapComponent: Map resized due to debug panel state change');
+      }, 350); // Slightly longer than CSS transition (300ms)
+    }
+  }, [debugPanelOpen, isMapLoaded]);
 
   const createSearchResultMarker = (result: SearchResult, index: number) => {
     const marker = document.createElement('div');

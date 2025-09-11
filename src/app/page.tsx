@@ -177,7 +177,9 @@ function MainApp() {
       </div>
 
       {/* Map - takes remaining space */}
-      <div className="flex-1 relative">
+      <div className={`flex-1 relative transition-all duration-300 ${
+        showDebugPanel ? 'mb-64' : 'mb-0'
+      }`}>
         <MapComponent
           onPointSelect={handlePointSelect}
           searchResults={searchResults}
@@ -185,6 +187,7 @@ function MainApp() {
           onMapCenterChange={handleMapCenterChange}
           centerOnCoordinates={centerOnCoordinates}
           onCenterComplete={handleCenterComplete}
+          debugPanelOpen={showDebugPanel}
         />
       </div>
 

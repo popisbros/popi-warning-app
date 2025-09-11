@@ -70,13 +70,25 @@ export default function DebugPanel({ isVisible, onToggle }: DebugPanelProps) {
         let responseData;
         
         try {
-          responseData = await responseClone.json();
-        } catch {
-          try {
+          // First try to get the content type
+          const contentType = response.headers.get('content-type') || '';
+          
+          if (contentType.includes('application/json')) {
+            responseData = await responseClone.json();
+          } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
             responseData = await responseClone.text();
-          } catch {
-            responseData = 'Unable to parse response';
+          } else if (contentType.includes('text/')) {
+            responseData = await responseClone.text();
+          } else {
+            // Try JSON first, then text
+            try {
+              responseData = await responseClone.json();
+            } catch {
+              responseData = await responseClone.text();
+            }
           }
+        } catch (error) {
+          responseData = `Error parsing response: ${error instanceof Error ? error.message : String(error)}`;
         }
 
         // Log the response
