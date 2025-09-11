@@ -311,7 +311,15 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
   // Handle external centering request
   useEffect(() => {
-    if (!map.current || !isMapLoaded || !centerOnCoordinates) return;
+    console.log('MapComponent: centerOnCoordinates useEffect triggered');
+    console.log('MapComponent: map.current exists:', !!map.current);
+    console.log('MapComponent: isMapLoaded:', isMapLoaded);
+    console.log('MapComponent: centerOnCoordinates:', centerOnCoordinates);
+    
+    if (!map.current || !isMapLoaded || !centerOnCoordinates) {
+      console.log('MapComponent: Early return - missing requirements');
+      return;
+    }
 
     console.log('MapComponent: centerOnCoordinates changed to:', centerOnCoordinates);
     console.log('MapComponent: Calling flyTo with center:', [centerOnCoordinates.lng, centerOnCoordinates.lat]);

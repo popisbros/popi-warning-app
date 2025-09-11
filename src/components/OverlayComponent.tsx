@@ -76,7 +76,7 @@ export default function OverlayComponent({
 
   return (
     <div
-      className={`fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 ${
+      className={`fixed inset-0 z-30 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 ${
         isClosing ? 'opacity-0' : 'opacity-100'
       }`}
       onClick={handleBackdropClick}
