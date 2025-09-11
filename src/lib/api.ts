@@ -1,5 +1,18 @@
 import { Coordinates, SearchResult, OSMNode, POI, POIType } from '@/types';
 
+// Helper function to calculate distance between two points
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
 // LocationIQ API functions
 export const searchLocation = async (query: string, mapCenter?: { lat: number; lng: number }): Promise<SearchResult[]> => {
   const apiKey = process.env.NEXT_PUBLIC_LOCATIONIQ_API_KEY;
@@ -15,7 +28,28 @@ export const searchLocation = async (query: string, mapCenter?: { lat: number; l
     if (!response.ok) {
       throw new Error(`LocationIQ API error: ${response.status}`);
     }
-    return await response.json();
+    const results = await response.json();
+    
+    // Sort results by distance from map center if provided
+    if (mapCenter && results.length > 0) {
+      results.sort((a: SearchResult, b: SearchResult) => {
+        const distanceA = calculateDistance(
+          mapCenter.lat, 
+          mapCenter.lng, 
+          parseFloat(a.lat), 
+          parseFloat(a.lon)
+        );
+        const distanceB = calculateDistance(
+          mapCenter.lat, 
+          mapCenter.lng, 
+          parseFloat(b.lat), 
+          parseFloat(b.lon)
+        );
+        return distanceA - distanceB;
+      });
+    }
+    
+    return results;
   } catch (error) {
     console.error('Error searching location:', error);
     throw error;

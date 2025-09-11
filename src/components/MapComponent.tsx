@@ -18,6 +18,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isProgrammaticMove = useRef(false);
+  const [hasCenteredOnStartup, setHasCenteredOnStartup] = useState(false);
 
   const centerOnCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -112,7 +113,6 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         lng: e.lngLat.lng,
       };
 
-      // Don't center map on clicked point - just select it
       // Search for existing POIs at this location
       const osmPOIs = await searchOSMPOIs(coordinates);
       const poi = osmPOIs.length > 0 ? osmNodeToPOI(osmPOIs[0]) : undefined;
@@ -144,12 +144,13 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     };
   }, [onPointSelect, onMapCenterChange]);
 
-  // Center on GPS location on startup
+  // Center on GPS location on startup (only once)
   useEffect(() => {
-    if (isMapLoaded) {
+    if (isMapLoaded && !hasCenteredOnStartup) {
       centerOnCurrentLocation();
+      setHasCenteredOnStartup(true);
     }
-  }, [isMapLoaded, centerOnCurrentLocation]);
+  }, [isMapLoaded, hasCenteredOnStartup, centerOnCurrentLocation]);
 
   // Handle search results
   useEffect(() => {
@@ -180,12 +181,15 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
       // Add click handler to marker
       marker.getElement().addEventListener('click', () => {
-        onPointSelect(coordinates);
+        // Center map on search result
         isProgrammaticMove.current = true;
         map.current?.flyTo({
           center: [coordinates.lng, coordinates.lat],
           zoom: 16,
         });
+        
+        // Open POI/Warning overlay for this location
+        onPointSelect(coordinates);
       });
     });
 
@@ -227,8 +231,6 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     })
       .setLngLat([selectedPoint.lng, selectedPoint.lat])
       .addTo(map.current);
-
-    // Don't auto-center on selected point - let user control the map
   }, [selectedPoint, isMapLoaded]);
 
   const createSearchResultMarker = (result: SearchResult, index: number) => {
@@ -257,10 +259,10 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     <div className="relative w-full h-full">
       <div ref={mapContainer} className="w-full h-full" />
       
-      {/* GPS Center Button */}
+      {/* GPS Center Button - moved to top left */}
       <button
         onClick={centerOnCurrentLocation}
-        className="absolute top-4 right-4 bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-lg border border-gray-200 z-10"
+        className="absolute top-4 left-4 bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-lg border border-gray-200 z-10"
         title="Center on my location"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
