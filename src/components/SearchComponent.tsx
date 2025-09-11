@@ -56,11 +56,22 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
     }, 1500);
   };
 
-  const handleResultClick = (result: SearchResult) => {
+  const handleResultClick = (result: SearchResult, event: React.MouseEvent) => {
     console.log('SearchComponent: handleResultClick called with:', result);
+    console.log('SearchComponent: result.place_id:', result.place_id);
+    console.log('SearchComponent: result.lat:', result.lat);
+    console.log('SearchComponent: result.lon:', result.lon);
+    console.log('SearchComponent: result.display_name:', result.display_name);
+    
+    // Prevent event bubbling
+    event.preventDefault();
+    event.stopPropagation();
+    
     setQuery(result.display_name);
     // Don't close dropdown immediately - let user click outside to close
+    console.log('SearchComponent: About to call onResultSelect');
     onResultSelect(result);
+    console.log('SearchComponent: onResultSelect called');
   };
 
   const clearSearch = () => {
@@ -76,9 +87,21 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
   // Close results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
-        setShowResults(false);
+      const target = event.target as Node;
+      
+      // Don't close if clicking on the input
+      if (inputRef.current && inputRef.current.contains(target)) {
+        return;
       }
+      
+      // Don't close if clicking on a search result item
+      const searchResultItem = (target as Element).closest('[data-search-result]');
+      if (searchResultItem) {
+        return;
+      }
+      
+      // Close the dropdown
+      setShowResults(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -130,7 +153,8 @@ export default function SearchComponent({ onSearchResults, onResultSelect, mapCe
           {results.map((result, index) => (
             <div
               key={result.place_id}
-              onClick={() => handleResultClick(result)}
+              data-search-result
+              onClick={(event) => handleResultClick(result, event)}
               className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
             >
               <div className="flex items-start">

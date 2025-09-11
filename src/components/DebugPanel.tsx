@@ -5,10 +5,14 @@ import { useState, useEffect } from 'react';
 interface DebugLog {
   id: string;
   timestamp: Date;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: 'info' | 'success' | 'warning' | 'error' | 'api_request' | 'api_response';
   component: string;
   message: string;
   data?: unknown;
+  url?: string;
+  method?: string;
+  status?: number;
+  duration?: number;
 }
 
 interface DebugPanelProps {
@@ -20,12 +24,14 @@ export default function DebugPanel({ isVisible, onToggle }: DebugPanelProps) {
   const [logs, setLogs] = useState<DebugLog[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Listen for debug messages from console.log
+  // Listen for debug messages from console.log and intercept API calls
   useEffect(() => {
     const originalConsoleLog = console.log;
     const originalConsoleError = console.error;
     const originalConsoleWarn = console.warn;
+    const originalFetch = window.fetch;
 
+    // Intercept console logs
     console.log = (...args) => {
       originalConsoleLog(...args);
       addLog('info', 'Console', args.join(' '));
@@ -41,10 +47,70 @@ export default function DebugPanel({ isVisible, onToggle }: DebugPanelProps) {
       addLog('warning', 'Console', args.join(' '));
     };
 
+    // Intercept fetch API calls
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const method = init?.method || 'GET';
+      const startTime = Date.now();
+      
+      // Log the request
+      addLog('api_request', 'API', `${method} ${url}`, {
+        url,
+        method,
+        headers: init?.headers,
+        body: init?.body
+      });
+
+      try {
+        const response = await originalFetch(input, init);
+        const duration = Date.now() - startTime;
+        
+        // Clone response to read body without consuming it
+        const responseClone = response.clone();
+        let responseData;
+        
+        try {
+          responseData = await responseClone.json();
+        } catch {
+          try {
+            responseData = await responseClone.text();
+          } catch {
+            responseData = 'Unable to parse response';
+          }
+        }
+
+        // Log the response
+        addLog('api_response', 'API', `${method} ${url} - ${response.status} ${response.statusText}`, {
+          url,
+          method,
+          status: response.status,
+          statusText: response.statusText,
+          duration,
+          headers: Object.fromEntries(response.headers.entries()),
+          data: responseData
+        });
+
+        return response;
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        
+        // Log the error
+        addLog('error', 'API', `${method} ${url} - Error`, {
+          url,
+          method,
+          duration,
+          error: error instanceof Error ? error.message : String(error)
+        });
+
+        throw error;
+      }
+    };
+
     return () => {
       console.log = originalConsoleLog;
       console.error = originalConsoleError;
       console.warn = originalConsoleWarn;
+      window.fetch = originalFetch;
     };
   }, []);
 
@@ -73,6 +139,10 @@ export default function DebugPanel({ isVisible, onToggle }: DebugPanelProps) {
         return '⚠️';
       case 'error':
         return '❌';
+      case 'api_request':
+        return '📤';
+      case 'api_response':
+        return '📥';
       default:
         return 'ℹ️';
     }
@@ -86,6 +156,10 @@ export default function DebugPanel({ isVisible, onToggle }: DebugPanelProps) {
         return 'text-yellow-600';
       case 'error':
         return 'text-red-600';
+      case 'api_request':
+        return 'text-blue-400';
+      case 'api_response':
+        return 'text-green-400';
       default:
         return 'text-blue-600';
     }
@@ -145,11 +219,25 @@ export default function DebugPanel({ isVisible, onToggle }: DebugPanelProps) {
                   </span>
                   <span className={`text-xs mt-0.5 flex-1 break-words ${getLogColor(log.type)}`}>
                     {log.message}
+                    {log.duration && (
+                      <span className="text-gray-400 ml-2">
+                        ({log.duration}ms)
+                      </span>
+                    )}
+                    {log.status && (
+                      <span className={`ml-2 ${
+                        log.status >= 200 && log.status < 300 ? 'text-green-400' : 
+                        log.status >= 400 ? 'text-red-400' : 'text-yellow-400'
+                      }`}>
+                        [{log.status}]
+                      </span>
+                    )}
                   </span>
                   {log.data !== undefined ? (
                     <details className="text-xs">
                       <summary className="cursor-pointer text-gray-400 hover:text-gray-300">
-                        Data
+                        {log.type === 'api_request' ? 'Request' : 
+                         log.type === 'api_response' ? 'Response' : 'Data'}
                       </summary>
                       <pre className="mt-1 p-2 bg-gray-800 rounded text-xs overflow-x-auto">
                         {typeof log.data === 'string' ? log.data : JSON.stringify(log.data, null, 2)}
