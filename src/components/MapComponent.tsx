@@ -11,9 +11,11 @@ interface MapComponentProps {
   searchResults: SearchResult[];
   selectedPoint?: Coordinates;
   onMapCenterChange?: (center: { lat: number; lng: number }) => void;
+  centerOnCoordinates?: Coordinates | null;
+  onCenterComplete?: () => void;
 }
 
-export default function MapComponent({ onPointSelect, searchResults, selectedPoint, onMapCenterChange }: MapComponentProps) {
+export default function MapComponent({ onPointSelect, searchResults, selectedPoint, onMapCenterChange, centerOnCoordinates, onCenterComplete }: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -223,6 +225,22 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       .setLngLat([selectedPoint.lng, selectedPoint.lat])
       .addTo(map.current);
   }, [selectedPoint, isMapLoaded]);
+
+  // Handle external centering request
+  useEffect(() => {
+    if (!map.current || !isMapLoaded || !centerOnCoordinates) return;
+
+    // Center map on the requested coordinates
+    map.current.flyTo({
+      center: [centerOnCoordinates.lng, centerOnCoordinates.lat],
+      zoom: 16,
+    });
+
+    // Call completion callback after centering
+    if (onCenterComplete) {
+      onCenterComplete();
+    }
+  }, [centerOnCoordinates, isMapLoaded, onCenterComplete]);
 
   const createSearchResultMarker = (result: SearchResult, index: number) => {
     const marker = document.createElement('div');
