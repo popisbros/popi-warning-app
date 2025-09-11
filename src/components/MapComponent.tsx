@@ -17,6 +17,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const isProgrammaticMove = useRef(false);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -42,15 +43,18 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       setIsMapLoaded(true);
     });
 
-    // Track map center changes
+    // Track map center changes (only for user-initiated moves)
     map.current.on('moveend', () => {
-      if (onMapCenterChange && map.current) {
+      // Only trigger center change if it's not a programmatic move
+      if (!isProgrammaticMove.current && onMapCenterChange && map.current) {
         const center = map.current.getCenter();
         onMapCenterChange({
           lat: center.lat,
           lng: center.lng
         });
       }
+      // Reset the flag
+      isProgrammaticMove.current = false;
     });
 
     // Handle map clicks
@@ -61,6 +65,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       };
 
       // Center map on clicked point
+      isProgrammaticMove.current = true;
       map.current?.flyTo({
         center: [coordinates.lng, coordinates.lat],
         zoom: 16,
@@ -134,6 +139,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       // Add click handler to marker
       marker.getElement().addEventListener('click', () => {
         onPointSelect(coordinates);
+        isProgrammaticMove.current = true;
         map.current?.flyTo({
           center: [coordinates.lng, coordinates.lat],
           zoom: 16,
@@ -143,6 +149,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
     // Fit map to show all search results
     if (searchResults.length > 1) {
+      isProgrammaticMove.current = true;
       map.current.fitBounds(bounds, {
         padding: 50,
         maxZoom: 15
@@ -153,6 +160,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         lat: parseFloat(searchResults[0].lat),
         lng: parseFloat(searchResults[0].lon),
       };
+      isProgrammaticMove.current = true;
       map.current.flyTo({
         center: [coordinates.lng, coordinates.lat],
         zoom: 16,
@@ -179,6 +187,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       .addTo(map.current);
 
     // Center map on selected point
+    isProgrammaticMove.current = true;
     map.current.flyTo({
       center: [selectedPoint.lng, selectedPoint.lat],
       zoom: 16,
@@ -212,6 +221,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       console.log('Geolocation is not supported by this browser.');
       // Fallback to a reasonable default location (London)
       if (map.current) {
+        isProgrammaticMove.current = true;
         map.current.flyTo({
           center: [-0.1276, 51.5074], // London coordinates
           zoom: 10,
@@ -228,6 +238,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         };
 
         if (map.current) {
+          isProgrammaticMove.current = true;
           map.current.flyTo({
             center: [coordinates.lng, coordinates.lat],
             zoom: 16,
@@ -238,6 +249,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         console.error('Error getting location:', error);
         // Fallback to a reasonable default location (London) instead of alert
         if (map.current) {
+          isProgrammaticMove.current = true;
           map.current.flyTo({
             center: [-0.1276, 51.5074], // London coordinates
             zoom: 10,
