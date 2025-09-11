@@ -30,8 +30,8 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     map.current = new maplibregl.Map({
       container: mapContainer.current,
       style: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerApiKey}`,
-      center: [2.3522, 48.8566], // Default to Paris coordinates
-      zoom: 13,
+      center: [0, 0], // Default to world center, will be overridden by GPS
+      zoom: 2,
       attributionControl: false,
     });
 
@@ -209,7 +209,14 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
 
   const centerOnCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser.');
+      console.log('Geolocation is not supported by this browser.');
+      // Fallback to a reasonable default location (London)
+      if (map.current) {
+        map.current.flyTo({
+          center: [-0.1276, 51.5074], // London coordinates
+          zoom: 10,
+        });
+      }
       return;
     }
 
@@ -229,7 +236,18 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       },
       (error) => {
         console.error('Error getting location:', error);
-        alert('Unable to get your location. Please check your browser permissions.');
+        // Fallback to a reasonable default location (London) instead of alert
+        if (map.current) {
+          map.current.flyTo({
+            center: [-0.1276, 51.5074], // London coordinates
+            zoom: 10,
+          });
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
       }
     );
   };
