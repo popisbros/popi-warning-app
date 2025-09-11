@@ -52,7 +52,7 @@ const getOSMBaseURL = () => {
   return process.env.OSM_API_URL || 'https://api06.dev.openstreetmap.org/';
 };
 
-export const searchOSMPOIs = async (coordinates: Coordinates, _radius: number = 100): Promise<OSMNode[]> => {
+export const searchOSMPOIs = async (coordinates: Coordinates): Promise<OSMNode[]> => {
   const baseURL = getOSMBaseURL();
   const { lat, lng } = coordinates;
   const bbox = `${lng - 0.001},${lat - 0.001},${lng + 0.001},${lat + 0.001}`;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Coordinates, SearchResult, POI } from '@/types';
@@ -18,6 +18,54 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
   const map = useRef<maplibregl.Map | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const isProgrammaticMove = useRef(false);
+
+  const centerOnCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      console.log('Geolocation is not supported by this browser.');
+      // Fallback to a reasonable default location (London)
+      if (map.current) {
+        isProgrammaticMove.current = true;
+        map.current.flyTo({
+          center: [-0.1276, 51.5074], // London coordinates
+          zoom: 10,
+        });
+      }
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coordinates: Coordinates = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+
+        if (map.current) {
+          isProgrammaticMove.current = true;
+          map.current.flyTo({
+            center: [coordinates.lng, coordinates.lat],
+            zoom: 16,
+          });
+        }
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        // Fallback to a reasonable default location (London) instead of alert
+        if (map.current) {
+          isProgrammaticMove.current = true;
+          map.current.flyTo({
+            center: [-0.1276, 51.5074], // London coordinates
+            zoom: 10,
+          });
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000 // 5 minutes
+      }
+    );
+  }, []);
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -100,14 +148,14 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
         map.current = null;
       }
     };
-  }, [onPointSelect]);
+  }, [onPointSelect, onMapCenterChange]);
 
   // Center on GPS location on startup (only if no search results)
   useEffect(() => {
     if (isMapLoaded && searchResults.length === 0) {
       centerOnCurrentLocation();
     }
-  }, [isMapLoaded, searchResults.length]);
+  }, [isMapLoaded, searchResults.length, centerOnCurrentLocation]);
 
   // Handle search results
   useEffect(() => {
@@ -179,7 +227,7 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
     }
 
     // Add marker for selected point
-    const marker = new maplibregl.Marker({
+    new maplibregl.Marker({
       element: createSelectedPointMarker(),
       anchor: 'center',
     })
@@ -214,54 +262,6 @@ export default function MapComponent({ onPointSelect, searchResults, selectedPoi
       </div>
     `;
     return marker;
-  };
-
-  const centerOnCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      console.log('Geolocation is not supported by this browser.');
-      // Fallback to a reasonable default location (London)
-      if (map.current) {
-        isProgrammaticMove.current = true;
-        map.current.flyTo({
-          center: [-0.1276, 51.5074], // London coordinates
-          zoom: 10,
-        });
-      }
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const coordinates: Coordinates = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-
-        if (map.current) {
-          isProgrammaticMove.current = true;
-          map.current.flyTo({
-            center: [coordinates.lng, coordinates.lat],
-            zoom: 16,
-          });
-        }
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-        // Fallback to a reasonable default location (London) instead of alert
-        if (map.current) {
-          isProgrammaticMove.current = true;
-          map.current.flyTo({
-            center: [-0.1276, 51.5074], // London coordinates
-            zoom: 10,
-          });
-        }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000 // 5 minutes
-      }
-    );
   };
 
   return (

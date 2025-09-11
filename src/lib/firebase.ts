@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getMessaging, getToken, onMessage, MessagePayload } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBgk6r_OseUsmtoikoFq61kW1cFy8LTcWQ",
@@ -30,15 +30,6 @@ export const db = getFirestore(app);
 // Initialize Firebase Cloud Messaging
 export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
-// Connect to emulators in development
-if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  // Only connect to emulators if not already connected
-  if (!auth.emulatorConfig) {
-    // connectAuthEmulator(auth, 'http://localhost:9099');
-  }
-  // Note: Firestore emulator connection is handled automatically in development
-}
-
 // FCM token management
 export const getFCMToken = async (): Promise<string | null> => {
   if (!messaging) return null;
@@ -61,7 +52,7 @@ export const getFCMToken = async (): Promise<string | null> => {
   }
 };
 
-export const onForegroundMessage = (callback: (payload: any) => void) => {
+export const onForegroundMessage = (callback: (payload: MessagePayload) => void) => {
   if (!messaging) return;
   return onMessage(messaging, (payload) => {
     console.log('Foreground message received:', payload);
